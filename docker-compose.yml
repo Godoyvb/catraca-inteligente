@@ -1,0 +1,19 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: catraca-rabbitmq
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER:-catraca}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:?Configure RABBIT_PASSWORD no .env}
+
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  rabbitmq_data:
