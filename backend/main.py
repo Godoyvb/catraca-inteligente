@@ -1,4 +1,6 @@
+
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, timezone
 
@@ -8,6 +10,18 @@ app = FastAPI(
     title="Catraca Inteligente",
     description="API acadêmica de demonstração",
     version="1.0.0"
+)
+
+# Permitir comunicação entre frontend e API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500"
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"]
 )
 
 
