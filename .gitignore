@@ -1,7 +1,6 @@
-cat > .gitignore <<'EOF'
 venv/
 __pycache__/
 *.pyc
 .env
 .pytest_cache/
-EOFdatabase/*.db
+database/*.db
