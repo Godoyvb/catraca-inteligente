@@ -4,4 +4,4 @@ __pycache__/
 *.pyc
 .env
 .pytest_cache/
-EOF
+EOFdatabase/*.db

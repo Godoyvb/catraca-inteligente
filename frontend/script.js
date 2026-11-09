@@ -1,13 +1,10 @@
 
 const API_URL = "http://localhost:8000";
 
-// Estatísticas da sessão
+// Estatísticas
 let total = 0;
 let aprovados = 0;
 let negados = 0;
-
-// Histórico de eventos
-const eventos = [];
 
 // Elementos da página
 const status = document.getElementById("status");
@@ -38,14 +35,18 @@ async function verificarSistema() {
 }
 
 // Atualizar estatísticas
-function atualizarEstatisticas() {
+function atualizarEstatisticas(eventos) {
+    total = eventos.length;
+    aprovados = eventos.filter(evento => evento.autorizado).length;
+    negados = total - aprovados;
+
     document.getElementById("total").textContent = total;
     document.getElementById("aprovados").textContent = aprovados;
     document.getElementById("negados").textContent = negados;
 }
 
 // Mostrar histórico
-function atualizarHistorico() {
+function atualizarHistorico(eventos) {
     listaEventos.innerHTML = "";
 
     if (eventos.length === 0) {
@@ -59,15 +60,16 @@ function atualizarHistorico() {
         return;
     }
 
-    eventos.slice().reverse().forEach(evento => {
+    eventos.forEach(evento => {
         const item = document.createElement("div");
         item.className = "event-item";
 
         const identificador = document.createElement("strong");
-        identificador.textContent = evento.identificador;
+        identificador.textContent = evento.identificador_demo;
 
         const horario = document.createElement("small");
-        horario.textContent = evento.horario;
+        horario.textContent = new Date(evento.data_hora)
+            .toLocaleString("pt-BR");
 
         const informacoes = document.createElement("div");
         informacoes.append(identificador, horario);
@@ -84,6 +86,25 @@ function atualizarHistorico() {
         item.append(informacoes, situacao);
         listaEventos.appendChild(item);
     });
+}
+
+// Buscar histórico no SQLite através da API
+async function carregarEventos() {
+    try {
+        const resposta = await fetch(`${API_URL}/eventos`);
+
+        if (!resposta.ok) {
+            throw new Error("Não foi possível carregar o histórico");
+        }
+
+        const dados = await resposta.json();
+
+        atualizarEstatisticas(dados.eventos);
+        atualizarHistorico(dados.eventos);
+
+    } catch (erro) {
+        console.error("Erro ao carregar eventos:", erro);
+    }
 }
 
 // Registrar evento de demonstração
@@ -119,28 +140,15 @@ async function registrarAcesso(autorizado) {
             throw new Error(dados.detail || "Erro ao enviar evento");
         }
 
-        total++;
+        resultado.textContent = autorizado
+            ? "✓ SIMULAÇÃO APROVADA!"
+            : "✕ SIMULAÇÃO NEGADA!";
 
-        if (autorizado) {
-            aprovados++;
-            resultado.textContent = "✓ SIMULAÇÃO APROVADA!";
-            resultado.style.color = "#26e69a";
-        } else {
-            negados++;
-            resultado.textContent = "✕ SIMULAÇÃO NEGADA!";
-            resultado.style.color = "#ff5572";
-        }
+        resultado.style.color = autorizado
+            ? "#26e69a"
+            : "#ff5572";
 
-        const horario = new Date().toLocaleTimeString("pt-BR");
-
-        eventos.push({
-            identificador: identificador,
-            autorizado: autorizado,
-            horario: horario
-        });
-
-        atualizarEstatisticas();
-        atualizarHistorico();
+        await carregarEventos();
 
         console.log("Evento enviado:", dados);
 
@@ -150,8 +158,10 @@ async function registrarAcesso(autorizado) {
     }
 }
 
-// Verificar conexão ao abrir a página
+// Inicialização
 verificarSistema();
+carregarEventos();
 
-// Atualizar conexão periodicamente
+// Atualizar informações periodicamente
 setInterval(verificarSistema, 10000);
+setInterval(carregarEventos, 10000);

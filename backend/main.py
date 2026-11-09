@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 
 from backend.rabbitmq import enviar_evento
+from database.database import criar_tabela, salvar_evento, listar_eventos
 
 app = FastAPI(
     title="Catraca Inteligente",
@@ -12,7 +13,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Permitir comunicação entre frontend e API
+criar_tabela()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -32,16 +34,15 @@ class EventoAcesso(BaseModel):
 
 @app.get("/")
 def inicio():
-    return {
-        "mensagem": "Catraca Inteligente funcionando!"
-    }
+    return {"mensagem": "Catraca Inteligente funcionando!"}
 
 
 @app.get("/status")
 def status():
     return {
         "status": "online",
-        "rabbitmq": "integrado"
+        "rabbitmq": "integrado",
+        "database": "integrado"
     }
 
 
@@ -54,15 +55,32 @@ def registrar_acesso(evento: EventoAcesso):
     }
 
     try:
+        salvar_evento(mensagem)
         enviar_evento(mensagem)
 
         return {
-            "mensagem": "Evento enviado ao RabbitMQ!",
+            "mensagem": "Evento salvo no SQLite e enviado ao RabbitMQ!",
             "evento": mensagem
         }
 
     except Exception as erro:
         raise HTTPException(
             status_code=503,
-            detail=f"Erro ao enviar evento: {str(erro)}"
+            detail=f"Erro ao registrar evento: {str(erro)}"
         )
+
+
+@app.get("/eventos")
+def consultar_eventos():
+    try:
+        return {
+            "total": len(listar_eventos()),
+            "eventos": listar_eventos()
+        }
+
+    except Exception as erro:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao consultar eventos: {str(erro)}"
+        )
+    
