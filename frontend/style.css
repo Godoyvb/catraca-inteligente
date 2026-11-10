@@ -395,3 +395,32 @@ footer {
         padding: 0 15px;
     }
 }
+
+/* Estado visual da catraca */
+.gate-status {
+    margin-top: 20px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gate-status strong {
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.gate-status small {
+    color: #a1a1aa;
+}
+
+.gate-approved {
+    color: #26e69a;
+}
+
+.gate-denied {
+    color: #ff5572;
+}

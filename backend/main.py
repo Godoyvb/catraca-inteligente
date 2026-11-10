@@ -8,7 +8,7 @@ import subprocess
 
 from backend.rabbitmq import enviar_evento
 from database.database import criar_tabela, salvar_evento, listar_eventos
-from backend.arduino import conectar_arduino
+from backend.arduino import testar_comunicacao
 
 app = FastAPI(
     title="Catraca Inteligente",
@@ -51,13 +51,13 @@ def status():
 
 @app.get("/arduino/status")
 def status_arduino():
-    conectado = conectar_arduino()
+    comunicacao = testar_comunicacao()
 
     return {
-        "arduino": "conectado" if conectado else "desconectado",
+        "arduino": "conectado" if comunicacao else "desconectado",
+        "comunicacao": "ok" if comunicacao else "falha",
         "porta": "/dev/ttyACM0"
     }
-
 
 @app.post("/camera/capturar")
 def capturar_foto():

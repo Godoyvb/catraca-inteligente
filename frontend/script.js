@@ -184,6 +184,23 @@ async function carregarEventos() {
     }
 }
 
+function atualizarEstadoCatraca(autorizado) {
+    const estado = document.getElementById("estado-catraca");
+    const descricao = document.getElementById("descricao-catraca");
+
+    if (!estado || !descricao) return;
+
+    if (autorizado) {
+        estado.textContent = "AUTORIZADO";
+        descricao.textContent = "Abertura simulada. Nenhum movimento físico.";
+        estado.className = "gate-approved";
+    } else {
+        estado.textContent = "NEGADO";
+        descricao.textContent = "Acesso bloqueado na demonstração.";
+        estado.className = "gate-denied";
+    }
+}
+
 async function registrarAcesso(autorizado) {
     const identificador = document
         .getElementById("identificador")
@@ -215,6 +232,8 @@ async function registrarAcesso(autorizado) {
         if (!resposta.ok) {
             throw new Error(dados.detail || "Erro ao enviar evento");
         }
+
+        atualizarEstadoCatraca(autorizado);
 
         if (dados.catraca === "abertura_simulada") {
             resultado.textContent =
