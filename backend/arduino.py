@@ -1,4 +1,3 @@
-
 import serial
 import time
 
@@ -18,9 +17,8 @@ def conectar_arduino():
                 VELOCIDADE,
                 timeout=2
             )
-
             time.sleep(2)
-            return True
+            conexao.reset_input_buffer()
 
         return True
 
@@ -29,16 +27,20 @@ def conectar_arduino():
         return False
 
 
-def enviar_comando(comando: str):
-    if comando not in ("ABRIR", "FECHAR"):
-        raise ValueError("Comando inválido")
-
+def testar_comunicacao():
     if not conectar_arduino():
-        raise ConnectionError("Não foi possível conectar ao Arduino")
+        return False
 
-    conexao.write((comando + "\n").encode("utf-8"))
+    try:
+        conexao.write(b"PING\n")
+        resposta = conexao.readline().decode(
+            "utf-8", errors="replace"
+        ).strip()
 
-    return {
-        "mensagem": "Comando enviado ao Arduino",
-        "comando": comando
-    }
+        print("Resposta do Arduino:", resposta)
+
+        return resposta == "PONG"
+
+    except serial.SerialException as erro:
+        print(f"Erro na comunicação: {erro}")
+        return False
