@@ -1,16 +1,19 @@
 
 const API_URL = "http://localhost:8000";
 
-// Elementos da página
 const status = document.getElementById("status");
 const statusDot = document.getElementById("status-dot");
 const resultado = document.getElementById("resultado");
 const listaEventos = document.getElementById("lista-eventos");
 const filtroEventos = document.getElementById("filtro-eventos");
 
+const fotoCamera = document.getElementById("fotoCamera");
+const cameraPlaceholder = document.getElementById("cameraPlaceholder");
+const statusCamera = document.getElementById("statusCamera");
+const btnCapturar = document.getElementById("btnCapturar");
+
 let todosEventos = [];
 
-// Verificar conexão com a API
 async function verificarSistema() {
     try {
         const resposta = await fetch(`${API_URL}/status`);
@@ -32,8 +35,10 @@ async function verificarSistema() {
     }
 }
 
-// Verificar conexão com Arduino
 async function verificarArduino() {
+    const arduinoDot = document.getElementById("arduino-dot");
+    const arduinoLabel = document.getElementById("arduino-label");
+
     try {
         const resposta = await fetch(`${API_URL}/arduino/status`);
 
@@ -42,18 +47,51 @@ async function verificarArduino() {
         }
 
         const dados = await resposta.json();
+        const conectado = dados.arduino === "conectado";
 
-        console.log("Estado do Arduino:", dados.arduino);
+        arduinoLabel.textContent = conectado ? "Conectado" : "Desconectado";
+        arduinoDot.style.background = conectado ? "#26e69a" : "#ff5572";
 
-        return dados.arduino === "conectado";
+        return conectado;
 
     } catch (erro) {
-        console.error("Erro ao verificar Arduino:", erro);
+        arduinoLabel.textContent = "Desconectado";
+        arduinoDot.style.background = "#ff5572";
         return false;
     }
 }
 
-// Atualizar estatísticas
+// Capturar foto pela Raspberry Pi
+async function capturarFoto() {
+    btnCapturar.disabled = true;
+    btnCapturar.textContent = "Capturando...";
+    statusCamera.textContent = "Aguarde a captura da câmera...";
+
+    try {
+        const resposta = await fetch(`${API_URL}/camera/capturar`, {
+            method: "POST"
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            throw new Error(dados.detail || "Erro ao capturar foto");
+        }
+
+        fotoCamera.src = `${API_URL}${dados.url}?t=${Date.now()}`;
+        fotoCamera.hidden = false;
+        cameraPlaceholder.style.display = "none";
+
+        statusCamera.textContent = "Foto capturada: " + dados.arquivo;
+
+    } catch (erro) {
+        statusCamera.textContent = "Erro: " + erro.message;
+    } finally {
+        btnCapturar.disabled = false;
+        btnCapturar.textContent = "📸 Tirar foto";
+    }
+}
+
 function atualizarEstatisticas(eventos) {
     const total = eventos.length;
 
@@ -61,14 +99,11 @@ function atualizarEstatisticas(eventos) {
         evento => Boolean(evento.autorizado)
     ).length;
 
-    const negados = total - aprovados;
-
     document.getElementById("total").textContent = total;
     document.getElementById("aprovados").textContent = aprovados;
-    document.getElementById("negados").textContent = negados;
+    document.getElementById("negados").textContent = total - aprovados;
 }
 
-// Mostrar histórico
 function atualizarHistorico(eventos) {
     listaEventos.innerHTML = "";
 
@@ -111,7 +146,6 @@ function atualizarHistorico(eventos) {
     });
 }
 
-// Aplicar filtro
 function aplicarFiltro() {
     const filtro = filtroEventos.value;
 
@@ -130,7 +164,6 @@ function aplicarFiltro() {
     atualizarHistorico(eventosFiltrados);
 }
 
-// Buscar histórico
 async function carregarEventos() {
     try {
         const resposta = await fetch(`${API_URL}/eventos`);
@@ -151,7 +184,6 @@ async function carregarEventos() {
     }
 }
 
-// Registrar evento de demonstração
 async function registrarAcesso(autorizado) {
     const identificador = document
         .getElementById("identificador")
@@ -185,18 +217,14 @@ async function registrarAcesso(autorizado) {
         }
 
         if (dados.catraca === "abertura_simulada") {
-            resultado.textContent = "✓ ACESSO AUTORIZADO — ABERTURA SIMULADA!";
+            resultado.textContent =
+                "✓ ACESSO AUTORIZADO — ABERTURA SIMULADA!";
             resultado.style.color = "#26e69a";
 
-        } else if (
-            dados.catraca === "acesso_negado_sem_movimento"
-        ) {
-            resultado.textContent = "✕ ACESSO NEGADO — SEM MOVIMENTO!";
+        } else if (dados.catraca === "acesso_negado_sem_movimento") {
+            resultado.textContent =
+                "✕ ACESSO NEGADO — SEM MOVIMENTO!";
             resultado.style.color = "#ff5572";
-
-        } else {
-            resultado.textContent = "Evento registrado!";
-            resultado.style.color = "#20d9f5";
         }
 
         await carregarEventos();
@@ -209,15 +237,12 @@ async function registrarAcesso(autorizado) {
     }
 }
 
-// Filtros
 filtroEventos.addEventListener("change", aplicarFiltro);
 
-// Inicialização
 verificarSistema();
 verificarArduino();
 carregarEventos();
 
-// Atualização automática
 setInterval(verificarSistema, 10000);
 setInterval(verificarArduino, 10000);
 setInterval(carregarEventos, 10000);

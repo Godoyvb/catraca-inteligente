@@ -6,165 +6,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catraca Inteligente | Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="script.js" defer></script>
 </head>
-
 <body>
 
-    <aside class="sidebar">
-        <div class="logo">
-            <div class="logo-icon">CI</div>
-            <div>
-                <h2>SMART<span>FACE</span></h2>
-                <small>SISTEMA DE ACESSO</small>
-            </div>
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-icon">◈</span>
+        <div>
+            <h1>Catraca Inteligente</h1>
+            <small>Sistema acadêmico de demonstração</small>
+        </div>
+    </div>
+
+    <div class="connection">
+        <span id="status-dot"></span>
+        <span id="status">Verificando API...</span>
+    </div>
+</header>
+
+<main class="container">
+
+    <section class="welcome">
+        <span class="overline">PAINEL DE CONTROLE</span>
+        <h2>Monitoramento de acesso</h2>
+        <p>Gerencie e acompanhe os eventos da demonstração.</p>
+    </section>
+
+    <section class="stats">
+        <div class="stat-card">
+            <span>Total de eventos</span>
+            <strong id="total">0</strong>
         </div>
 
-        <nav>
-            <a href="#" class="active">▦ Dashboard</a>
-            <a href="#identificacao">◉ Identificação</a>
-            <a href="#historico">◷ Histórico</a>
-        </nav>
-
-        <div class="sidebar-bottom">
-            <div class="system-indicator"></div>
-            <div>
-                <strong>Sistema acadêmico</strong>
-                <small>Ambiente de demonstração</small>
-            </div>
+        <div class="stat-card approved-card">
+            <span>Autorizados</span>
+            <strong id="aprovados">0</strong>
         </div>
-    </aside>
 
-    <main class="content">
+        <div class="stat-card denied-card">
+            <span>Negados</span>
+            <strong id="negados">0</strong>
+        </div>
+    </section>
 
-        <header class="topbar">
-            <div>
-                <span class="overline">PAINEL DE CONTROLE</span>
-                <h1>Dashboard</h1>
-                <p>Acompanhamento dos eventos de acesso</p>
-            </div>
+    <section class="main-grid">
 
-            <div class="connection">
-                <span id="status-dot"></span>
-                <span id="status">Verificando API...</span>
-            </div>
-        </header>
-
-        <section class="welcome">
-            <div>
-                <span class="overline">CATRACA INTELIGENTE</span>
-                <h2>Controle de acesso <span>inteligente.</span></h2>
-                <p>Simule identificações e acompanhe os eventos em tempo real.</p>
-            </div>
-
-            <div class="welcome-icon">◈</div>
-        </section>
-
-        <section class="stats">
-            <div class="stat-card">
-                <span class="stat-label">TOTAL DE TESTES</span>
-                <strong id="total">0</strong>
-                <small>Eventos registrados</small>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">APROVADOS</span>
-                <strong class="green" id="aprovados">0</strong>
-                <small>Simulações autorizadas</small>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">NEGADOS</span>
-                <strong class="red" id="negados">0</strong>
-                <small>Simulações negadas</small>
-            </div>
-        </section>
-
-        <section class="main-grid">
-
-            <div class="panel identification" id="identificacao">
-                <div class="panel-header">
-                    <div>
-                        <span class="overline">MÓDULO 01</span>
-                        <h2>Identificação de teste</h2>
-                    </div>
-                    <span class="tag">DEMO</span>
+        <div class="panel identification" id="identificacao">
+            <div class="panel-header">
+                <div>
+                    <span class="overline">MÓDULO 01</span>
+                    <h2>Identificação de teste</h2>
                 </div>
-
-                <div class="scan-area">
-                    <div class="scan-circle">
-                        <span>◉</span>
-                        <div class="scan-line"></div>
-                    </div>
-                    <strong>Área de simulação</strong>
-                    <small>Utilize identificadores fictícios</small>
-                </div>
-
-                <label for="identificador">IDENTIFICADOR</label>
-                <input
-                    type="text"
-                    id="identificador"
-                    placeholder="Ex: ALUNO001"
-                    autocomplete="off"
-                >
-
-                <div class="button-group">
-                    <button class="btn-approve" onclick="registrarAcesso(true)">
-                        ✓ Simular autorizado
-                    </button>
-
-                    <button class="btn-deny" onclick="registrarAcesso(false)">
-                        ✕ Simular negado
-                    </button>
-                </div>
-
-                <div id="resultado" aria-live="polite"></div>
+                <span class="tag">DEMO</span>
             </div>
 
-            <div class="panel history" id="historico">
-                <div class="panel-header">
-                    <div>
-                        <span class="overline">MÓDULO 02</span>
-                        <h2>Histórico de eventos</h2>
-                    </div>
-                    <span class="history-icon">◷</span>
-                </div>
+            <div class="camera-area">
+                <div class="camera-preview">
 
-                <div class="history-controls">
-                    <select id="filtro-eventos">
-                        <option value="todos">Todos os eventos</option>
-                        <option value="aprovados">Somente aprovados</option>
-                        <option value="negados">Somente negados</option>
-                    </select>
-
-                    <button
-                        type="button"
-                        class="btn-refresh"
-                        onclick="carregarEventos()"
+                    <img
+                        id="fotoCamera"
+                        alt="Última foto capturada"
+                        hidden
                     >
-                        ↻ Atualizar
-                    </button>
+
+                    <div id="cameraPlaceholder">
+                        <span class="camera-icon">📷</span>
+                        <strong>Câmera Raspberry Pi</strong>
+                        <small>Aguardando captura</small>
+                    </div>
+
                 </div>
 
-                <div id="lista-eventos" class="event-list">
-                    <div class="empty">
-                        <span>◷</span>
-                        <p>Nenhum evento registrado.</p>
-                        <small>Os testes aparecerão aqui.</small>
-                    </div>
-                </div>
+                <button
+                    type="button"
+                    class="btn-camera"
+                    id="btnCapturar"
+                    onclick="capturarFoto()"
+                >
+                    📸 Tirar foto
+                </button>
+
+                <small id="statusCamera">
+                    Câmera pronta para captura
+                </small>
             </div>
 
-        </section>
+            <label for="identificador">IDENTIFICADOR FICTÍCIO</label>
 
-        <footer>
-            SMARTFACE · PROJETO ACADÊMICO · CATRACA INTELIGENTE
-        </footer>
+            <input
+                type="text"
+                id="identificador"
+                placeholder="Ex: ALUNO001"
+                autocomplete="off"
+            >
 
-    </main>
+            <div class="button-group">
+                <button
+                    class="btn-approve"
+                    onclick="registrarAcesso(true)"
+                >
+                    ✓ Simular autorizado
+                </button>
 
+                <button
+                    class="btn-deny"
+                    onclick="registrarAcesso(false)"
+                >
+                    ✕ Simular negado
+                </button>
+            </div>
+
+            <div id="resultado" aria-live="polite"></div>
+        </div>
+
+        <div class="panel history">
+            <div class="panel-header">
+                <div>
+                    <span class="overline">MÓDULO 02</span>
+                    <h2>Histórico de eventos</h2>
+                </div>
+
+                <span class="tag">AO VIVO</span>
+            </div>
+
+            <div class="history-toolbar">
+                <label for="filtro-eventos">Filtrar eventos</label>
+
+                <select id="filtro-eventos">
+                    <option value="todos">Todos os eventos</option>
+                    <option value="aprovados">Autorizados</option>
+                    <option value="negados">Negados</option>
+                </select>
+            </div>
+
+            <div id="lista-eventos">
+                <div class="empty">
+                    <span>◷</span>
+                    <p>Carregando histórico...</p>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="system-info">
+        <span class="overline">INFRAESTRUTURA</span>
+        <h2>Componentes do sistema</h2>
+
+        <div class="component-list">
+            <div>
+                <span class="component-dot online"></span>
+                <span>FastAPI</span>
+                <strong>API</strong>
+            </div>
+
+            <div>
+                <span class="component-dot online"></span>
+                <span>RabbitMQ</span>
+                <strong>Mensageria</strong>
+            </div>
+
+            <div>
+                <span class="component-dot online"></span>
+                <span>SQLite</span>
+                <strong>Banco de dados</strong>
+            </div>
+
+            <div>
+                <span class="component-dot" id="arduino-dot"></span>
+                <span>Arduino</span>
+                <strong id="arduino-label">Verificando</strong>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    Catraca Inteligente · Projeto acadêmico de demonstração
+</footer>
+
+<script src="script.js"></script>
 </body>
 </html>

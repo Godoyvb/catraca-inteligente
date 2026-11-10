@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from pathlib import Path
+import subprocess
 
 from backend.rabbitmq import enviar_evento
 from database.database import criar_tabela, salvar_evento, listar_eventos
@@ -55,6 +57,70 @@ def status_arduino():
         "arduino": "conectado" if conectado else "desconectado",
         "porta": "/dev/ttyACM0"
     }
+
+
+@app.post("/camera/capturar")
+def capturar_foto():
+    pasta = Path(__file__).resolve().parent.parent / "frontend" / "capturas"
+    pasta.mkdir(parents=True, exist_ok=True)
+
+    nome_arquivo = datetime.now().strftime("captura_%Y%m%d_%H%M%S.jpg")
+    caminho = pasta / nome_arquivo
+
+    try:
+        resultado = subprocess.run(
+            [
+                "rpicam-still",
+                "-n",
+                "-t", "2000",
+                "--width", "1280",
+                "--height", "720",
+                "-o", str(caminho)
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20
+        )
+
+        if resultado.returncode != 0 or not caminho.exists():
+            raise RuntimeError(resultado.stderr[-1000:])
+
+        return {
+            "mensagem": "Foto capturada com sucesso!",
+            "arquivo": nome_arquivo,
+            "url": f"/camera/foto/{nome_arquivo}"
+        }
+
+    except Exception as erro:
+        if caminho.exists():
+            caminho.unlink()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao capturar foto: {str(erro)}"
+        )
+
+
+@app.get("/camera/foto/{nome_arquivo}")
+def visualizar_foto(nome_arquivo: str):
+    from fastapi.responses import FileResponse
+
+    if (
+        not nome_arquivo.startswith("captura_")
+        or not nome_arquivo.endswith(".jpg")
+        or Path(nome_arquivo).name != nome_arquivo
+    ):
+        raise HTTPException(status_code=400, detail="Nome de arquivo inválido")
+
+    caminho = (
+        Path(__file__).resolve().parent.parent
+        / "frontend" / "capturas" / nome_arquivo
+    )
+
+    if not caminho.is_file():
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
+
+    return FileResponse(caminho, media_type="image/jpeg")
 
 
 @app.post("/acesso")
