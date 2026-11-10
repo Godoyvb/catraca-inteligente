@@ -67,7 +67,7 @@
             <div class="stat-card">
                 <span class="stat-label">TOTAL DE TESTES</span>
                 <strong id="total">0</strong>
-                <small>Eventos registrados nesta sessão</small>
+                <small>Eventos registrados</small>
             </div>
 
             <div class="stat-card">
@@ -128,9 +128,25 @@
                 <div class="panel-header">
                     <div>
                         <span class="overline">MÓDULO 02</span>
-                        <h2>Últimos eventos</h2>
+                        <h2>Histórico de eventos</h2>
                     </div>
                     <span class="history-icon">◷</span>
+                </div>
+
+                <div class="history-controls">
+                    <select id="filtro-eventos">
+                        <option value="todos">Todos os eventos</option>
+                        <option value="aprovados">Somente aprovados</option>
+                        <option value="negados">Somente negados</option>
+                    </select>
+
+                    <button
+                        type="button"
+                        class="btn-refresh"
+                        onclick="carregarEventos()"
+                    >
+                        ↻ Atualizar
+                    </button>
                 </div>
 
                 <div id="lista-eventos" class="event-list">

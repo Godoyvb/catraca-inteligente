@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from backend.rabbitmq import enviar_evento
 from database.database import criar_tabela, salvar_evento, listar_eventos
+from backend.arduino import conectar_arduino
 
 app = FastAPI(
     title="Catraca Inteligente",
@@ -46,6 +47,16 @@ def status():
     }
 
 
+@app.get("/arduino/status")
+def status_arduino():
+    conectado = conectar_arduino()
+
+    return {
+        "arduino": "conectado" if conectado else "desconectado",
+        "porta": "/dev/ttyACM0"
+    }
+
+
 @app.post("/acesso")
 def registrar_acesso(evento: EventoAcesso):
     mensagem = {
@@ -59,8 +70,13 @@ def registrar_acesso(evento: EventoAcesso):
         enviar_evento(mensagem)
 
         return {
-            "mensagem": "Evento salvo no SQLite e enviado ao RabbitMQ!",
-            "evento": mensagem
+            "mensagem": "Evento registrado com sucesso!",
+            "evento": mensagem,
+            "catraca": (
+                "abertura_simulada"
+                if evento.autorizado
+                else "acesso_negado_sem_movimento"
+            )
         }
 
     except Exception as erro:
@@ -73,9 +89,11 @@ def registrar_acesso(evento: EventoAcesso):
 @app.get("/eventos")
 def consultar_eventos():
     try:
+        eventos = listar_eventos()
+
         return {
-            "total": len(listar_eventos()),
-            "eventos": listar_eventos()
+            "total": len(eventos),
+            "eventos": eventos
         }
 
     except Exception as erro:
@@ -83,4 +101,3 @@ def consultar_eventos():
             status_code=500,
             detail=f"Erro ao consultar eventos: {str(erro)}"
         )
-    
