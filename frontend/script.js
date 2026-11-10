@@ -1,16 +1,14 @@
 
 const API_URL = "http://localhost:8000";
 
-// Estatísticas
-let total = 0;
-let aprovados = 0;
-let negados = 0;
-
 // Elementos da página
 const status = document.getElementById("status");
 const statusDot = document.getElementById("status-dot");
 const resultado = document.getElementById("resultado");
 const listaEventos = document.getElementById("lista-eventos");
+const filtroEventos = document.getElementById("filtro-eventos");
+
+let todosEventos = [];
 
 // Verificar conexão com a API
 async function verificarSistema() {
@@ -34,11 +32,36 @@ async function verificarSistema() {
     }
 }
 
+// Verificar conexão com Arduino
+async function verificarArduino() {
+    try {
+        const resposta = await fetch(`${API_URL}/arduino/status`);
+
+        if (!resposta.ok) {
+            throw new Error("Arduino indisponível");
+        }
+
+        const dados = await resposta.json();
+
+        console.log("Estado do Arduino:", dados.arduino);
+
+        return dados.arduino === "conectado";
+
+    } catch (erro) {
+        console.error("Erro ao verificar Arduino:", erro);
+        return false;
+    }
+}
+
 // Atualizar estatísticas
 function atualizarEstatisticas(eventos) {
-    total = eventos.length;
-    aprovados = eventos.filter(evento => evento.autorizado).length;
-    negados = total - aprovados;
+    const total = eventos.length;
+
+    const aprovados = eventos.filter(
+        evento => Boolean(evento.autorizado)
+    ).length;
+
+    const negados = total - aprovados;
 
     document.getElementById("total").textContent = total;
     document.getElementById("aprovados").textContent = aprovados;
@@ -53,8 +76,8 @@ function atualizarHistorico(eventos) {
         listaEventos.innerHTML = `
             <div class="empty">
                 <span>◷</span>
-                <p>Nenhum evento registrado.</p>
-                <small>Os testes aparecerão aqui.</small>
+                <p>Nenhum evento encontrado.</p>
+                <small>Experimente outro filtro.</small>
             </div>
         `;
         return;
@@ -75,20 +98,39 @@ function atualizarHistorico(eventos) {
         informacoes.append(identificador, horario);
 
         const situacao = document.createElement("span");
-        situacao.className = evento.autorizado
+        const autorizado = Boolean(evento.autorizado);
+
+        situacao.className = autorizado
             ? "event-status aprovado"
             : "event-status negado";
 
-        situacao.textContent = evento.autorizado
-            ? "APROVADO"
-            : "NEGADO";
+        situacao.textContent = autorizado ? "APROVADO" : "NEGADO";
 
         item.append(informacoes, situacao);
         listaEventos.appendChild(item);
     });
 }
 
-// Buscar histórico no SQLite através da API
+// Aplicar filtro
+function aplicarFiltro() {
+    const filtro = filtroEventos.value;
+
+    let eventosFiltrados = todosEventos;
+
+    if (filtro === "aprovados") {
+        eventosFiltrados = todosEventos.filter(
+            evento => Boolean(evento.autorizado)
+        );
+    } else if (filtro === "negados") {
+        eventosFiltrados = todosEventos.filter(
+            evento => !Boolean(evento.autorizado)
+        );
+    }
+
+    atualizarHistorico(eventosFiltrados);
+}
+
+// Buscar histórico
 async function carregarEventos() {
     try {
         const resposta = await fetch(`${API_URL}/eventos`);
@@ -99,8 +141,10 @@ async function carregarEventos() {
 
         const dados = await resposta.json();
 
-        atualizarEstatisticas(dados.eventos);
-        atualizarHistorico(dados.eventos);
+        todosEventos = dados.eventos;
+
+        atualizarEstatisticas(todosEventos);
+        aplicarFiltro();
 
     } catch (erro) {
         console.error("Erro ao carregar eventos:", erro);
@@ -119,7 +163,7 @@ async function registrarAcesso(autorizado) {
         return;
     }
 
-    resultado.textContent = "Enviando evento...";
+    resultado.textContent = "Processando autorização...";
     resultado.style.color = "#20d9f5";
 
     try {
@@ -140,17 +184,24 @@ async function registrarAcesso(autorizado) {
             throw new Error(dados.detail || "Erro ao enviar evento");
         }
 
-        resultado.textContent = autorizado
-            ? "✓ SIMULAÇÃO APROVADA!"
-            : "✕ SIMULAÇÃO NEGADA!";
+        if (dados.catraca === "abertura_simulada") {
+            resultado.textContent = "✓ ACESSO AUTORIZADO — ABERTURA SIMULADA!";
+            resultado.style.color = "#26e69a";
 
-        resultado.style.color = autorizado
-            ? "#26e69a"
-            : "#ff5572";
+        } else if (
+            dados.catraca === "acesso_negado_sem_movimento"
+        ) {
+            resultado.textContent = "✕ ACESSO NEGADO — SEM MOVIMENTO!";
+            resultado.style.color = "#ff5572";
+
+        } else {
+            resultado.textContent = "Evento registrado!";
+            resultado.style.color = "#20d9f5";
+        }
 
         await carregarEventos();
 
-        console.log("Evento enviado:", dados);
+        console.log("Resposta da API:", dados);
 
     } catch (erro) {
         resultado.textContent = "Erro: " + erro.message;
@@ -158,10 +209,15 @@ async function registrarAcesso(autorizado) {
     }
 }
 
+// Filtros
+filtroEventos.addEventListener("change", aplicarFiltro);
+
 // Inicialização
 verificarSistema();
+verificarArduino();
 carregarEventos();
 
-// Atualizar informações periodicamente
+// Atualização automática
 setInterval(verificarSistema, 10000);
+setInterval(verificarArduino, 10000);
 setInterval(carregarEventos, 10000);
