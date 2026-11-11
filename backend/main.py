@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,7 +7,7 @@ import subprocess
 
 from backend.rabbitmq import enviar_evento
 from database.database import criar_tabela, salvar_evento, listar_eventos
-from backend.arduino import testar_comunicacao
+from backend.arduino import testar_comunicacao, liberar_catraca, bloquear_catraca
 
 app = FastAPI(
     title="Catraca Inteligente",
@@ -134,22 +133,29 @@ def registrar_acesso(evento: EventoAcesso):
     try:
         salvar_evento(mensagem)
         enviar_evento(mensagem)
-
-        return {
-            "mensagem": "Evento registrado com sucesso!",
-            "evento": mensagem,
-            "catraca": (
-                "abertura_simulada"
-                if evento.autorizado
-                else "acesso_negado_sem_movimento"
-            )
-        }
-
     except Exception as erro:
         raise HTTPException(
             status_code=503,
             detail=f"Erro ao registrar evento: {str(erro)}"
         )
+
+    try:
+        if evento.autorizado:
+            ok = liberar_catraca()
+            resultado_catraca = "catraca_aberta" if ok else "falha_arduino"
+        else:
+            ok = bloquear_catraca()
+            resultado_catraca = (
+                "acesso_negado_sem_movimento" if ok else "falha_arduino"
+            )
+    except Exception as erro:
+        resultado_catraca = f"falha_arduino: {erro}"
+
+    return {
+        "mensagem": "Evento registrado com sucesso!",
+        "evento": mensagem,
+        "catraca": resultado_catraca
+    }
 
 
 @app.get("/eventos")
