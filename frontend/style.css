@@ -424,3 +424,13 @@ footer {
 .gate-denied {
     color: #ff5572;
 }
+
+
+/* Cores reforçadas do indicador visual */
+#estado-catraca.gate-approved {
+    color: #26e69a !important;
+}
+
+#estado-catraca.gate-denied {
+    color: #ff5572 !important;
+}

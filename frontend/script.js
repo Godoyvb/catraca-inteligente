@@ -191,12 +191,12 @@ function atualizarEstadoCatraca(autorizado) {
     if (!estado || !descricao) return;
 
     if (autorizado) {
-        estado.textContent = "AUTORIZADO";
-        descricao.textContent = "Abertura simulada. Nenhum movimento físico.";
+        estado.textContent = "LIBERADO";
+        descricao.textContent = "Acesso autorizado na demonstração.";
         estado.className = "gate-approved";
     } else {
         estado.textContent = "NEGADO";
-        descricao.textContent = "Acesso bloqueado na demonstração.";
+        descricao.textContent = "Acesso negado na demonstração.";
         estado.className = "gate-denied";
     }
 }
